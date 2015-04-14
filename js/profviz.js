@@ -52,7 +52,7 @@ var worker_scripts = [
   "tools/logreader.js",
   "tools/tickprocessor.js",
   "composer.js",
-  "gnuplot-4.6.3-emscripten.js"
+  kGnuplot[kMode]
 ];
 
 
