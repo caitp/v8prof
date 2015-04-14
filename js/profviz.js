@@ -44,7 +44,7 @@ function plotWorker() {
 
   function initialize() {
     ui.freeze();
-    worker = new Worker("worker.js");
+    worker = new Worker("js/worker.js");
     running = false;
 
     worker.postMessage({ "call" : "load scripts",
