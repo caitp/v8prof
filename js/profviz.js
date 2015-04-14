@@ -26,14 +26,14 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 var worker_scripts = [
-  "../csvparser.js",
-  "../splaytree.js",
-  "../codemap.js",
-  "../consarray.js",
-  "../profile.js",
-  "../profile_view.js",
-  "../logreader.js",
-  "../tickprocessor.js",
+  "tools/csvparser.js",
+  "tools/splaytree.js",
+  "tools/codemap.js",
+  "tools/consarray.js",
+  "tools/profile.js",
+  "tools/profile_view.js",
+  "tools/logreader.js",
+  "tools/tickprocessor.js",
   "composer.js",
   "gnuplot-4.6.3-emscripten.js"
 ];
