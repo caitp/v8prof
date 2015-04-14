@@ -25,6 +25,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+var kGnuplot = {
+  release: "gnuplot-4.6.3-emscripten.js",
+  debug: "gnuplot-4.6.3-emscripten-debug.js",
+};
+
+var kMode = "release";
+
+(window.location.search || "").slice(1).split("&").forEach(function(key) {
+  key = key.split("=");
+  if (key[0] !== "debug") return;
+  var value = key.length > 2 ? key.slice(2).map(function(k) { return k === "" ? "=" : k }).join("") : key[1];
+  if (value === void 0) value = "true";
+  if (value !== "0" && value !== "false") {
+    kMode = "debug";
+  }
+});
+
 var worker_scripts = [
   "tools/csvparser.js",
   "tools/splaytree.js",
