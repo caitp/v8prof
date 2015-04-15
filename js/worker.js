@@ -25,35 +25,51 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+this.kWorkerName = "V8PROF_WORKER";
+
+var kMode = "release";
+
+(self.location.search || "").slice(1).split("&").forEach(function(key) {
+  key = key.split("=");
+  if (key[0] !== "debug") return;
+  var value = key.length > 2 ? key.slice(2).map(function(k) { return k === "" ? "=" : k }).join("") : key[1];
+  if (value === void 0) value = "true";
+  if (value !== "0" && value !== "false") {
+    kMode = "debug";
+  }
+});
+
 var delegateList = {
   "load scripts" : load_scripts,
   "run" : run,
 }
 
 self.addEventListener("message", function(event) {
-  var call = delegateList[event.data["call"]];
-  var result = call(event.data["args"]);
+  var call = delegateList[event.data["cmd"]];
+  var result = call(event.data["content"]);
 }, false);
 
 
 function log(text) {
-  self.postMessage({ "call" : "log", "args" : text });
+  self.postMessage({ "cmd" : "log", "content" : text });
 }
 
 
-function displayplot(content) {
-  self.postMessage({ "call" : "displayplot", "args" : content});
+function displayplot(node) {
+  var contents = new Uint8Array(node.contents);
+  var file = new Blob([contents.buffer], { "type" : "image\/svg+xml" });
+  self.postMessage({ "cmd" : "displayplot", "content" : file});
 }
 
 
 function displayprof(content) {
-  self.postMessage({ "call" : "displayprof", "args" : content});
+  self.postMessage({ "cmd" : "displayprof", "content" : content});
 }
 
 
 function setRange(start, end) {
-  self.postMessage({ "call" : "range",
-                     "args" : { "start" : start, "end" : end } });
+  self.postMessage({ "cmd" : "range",
+                     "content" : { "start" : start, "end" : end } });
 }
 
 
@@ -68,13 +84,13 @@ function time(name, fun) {
 function load_scripts(scripts) {
   time("Loading scripts",
        function() { for (var i in scripts) importScripts(scripts[i]); });
-  self.postMessage({ "call" : "script" });
+  self.postMessage({ "cmd" : "script" });
 }
 
 
 function log_error(text) {
-  self.postMessage({"call": "error", "args": text});
-  self.postMessage({"call": "reset"});
+  self.postMessage({"cmd": "error", "content": text});
+  self.postMessage({"cmd": "reset"});
 }
 
 
@@ -86,12 +102,18 @@ function run(args) {
   var range_start_override = args["range_start"];
   var range_end_override = args["range_end"];
 
+  if (file.size > 100000000) {
+    Module.printErr("log file size (" + (file.size / 1024) +
+                    "kB is too large. Use a file below 100mb.");
+    return;
+  }
+
   var reader = new FileReaderSync();
   var content_lines;
 
   time("Reading log file (" + (file.size / 1024).toFixed(1) + " kB)",
        function() {
-         var content = reader.readAsText(file);
+         var content = reader.readAsText(file, "utf-8");
          content_lines = content.split("\n");
        });
 
@@ -148,26 +170,37 @@ function run(args) {
                 " enhanced font \"Helvetica,10\"");
          output("set output \""+ output_file_name + "\"");
          objects = psc.assembleOutput(output);
+         FS.ignorePermissions = true;
          if (FS.findObject(input_file_name)) {
            FS.deleteFile(input_file_name);
          }
          var arrc = Module["intArrayFromString"](plot_script, true);
+         FS.ignorePermissions = true;
          FS.createDataFile("/", input_file_name, arrc);
        });
 
-  time("Running gnuplot (" + objects + " objects)",
-       function() { Module.run([input_file_name]); });
+  time("Running gnuplot (" + objects + " objects)", function() {
+        Module.calledRun = false;
+        shouldRunNow = true;
+        FS.ignorePermissions = true;
+        Module.run([input_file_name]);
+  });
 
-  displayplot(FS.findObject(output_file_name));
+  FS.ignorePermissions = true;
+  var plot = FS.findObject(output_file_name);
+  displayplot(plot);
 }
 
-
 var Module = {
-    "noInitialRun": true,
-    print: function(text) {
-        self.postMessage({"call": "error", "args": text});
-    },
-    printErr: function(text) {
-        self.postMessage({"call": "error", "args": text});
-    },
+  'noInitialRun': true,
+  print: function(text) {
+    self.postMessage({'cmd': 'error', 'content': text});
+  },
+  printErr: function(text) {
+    if (!text.indexOf("Calling stub instead")) {
+      if (kMode === "debug") console.log(new Error(text));
+      return;
+    }
+    self.postMessage({'cmd': 'error', 'content': text});
+  }
 };

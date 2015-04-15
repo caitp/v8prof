@@ -390,7 +390,9 @@ function PlotScriptComposer(kResX, kResY, error_output) {
   this.assembleOutput = function(output) {
     output("set yrange [0:" + (num_timer_event + 1) + "]");
     output("set xlabel \"execution time in ms\"");
-    output("set xrange [" + range_start + ":" + range_end + "]");
+    if (Number.isFinite(range_start) && Number.isFinite(range_end)) {
+      output("set xrange [" + range_start + ":" + range_end + "]");
+    }
     output("set style fill pattern 2 bo 1");
     output("set style rect fs solid 1 noborder");
     output("set style line 1 lt 1 lw 1 lc rgb \"#000000\"");

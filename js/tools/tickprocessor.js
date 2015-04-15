@@ -210,8 +210,8 @@ function TickProcessor(
   var range_start = parseInt(rangelimits[0]);
   var range_end = parseInt(rangelimits[1]);
   // Convert milliseconds to nanoseconds.
-  this.range_start = isNaN(range_start) ? -Infinity : (range_start * 1000);
-  this.range_end = isNaN(range_end) ? Infinity : (range_end * 1000)
+  this.range_start = isFinite(range_start) ? (range_start * 1000) : -Infinity;
+  this.range_end = isFinite(range_end) ? (range_end * 1000) : Infinity;
 
   V8Profile.prototype.handleUnknownCode = function(
       operation, addr, opt_stackPos) {

@@ -64,15 +64,15 @@ function plotWorker() {
     worker = new Worker("js/worker.js");
     running = false;
 
-    worker.postMessage({ "call" : "load scripts",
-                         "args" : worker_scripts });
+    worker.postMessage({ "cmd" : "load scripts",
+                         "content" : worker_scripts });
 
     worker.addEventListener("message", function(event) {
-      var call = delegateList[event.data["call"]];
+      var call = delegateList[event.data["cmd"]];
       if (!call) {
         return console.log(event.content || new Error().stack);
       }
-      call(event.data["args"]);
+      call(event.data["content"]);
     });
   }
 
@@ -93,7 +93,7 @@ function plotWorker() {
       'range_start' : range_start,
       'range_end'   : range_end
     }
-    worker.postMessage({ 'call' : 'run', 'args' : args });
+    worker.postMessage({ 'cmd' : 'run', 'content' : args });
   }
 
   this.reset = function() {
@@ -207,14 +207,12 @@ function logError(text) {
 }
 
 
-function displayplot(args) {
+function displayplot(blob) {
   if (error_logged) {
     log("Plot failed.\n\n");
   } else {
     log("Displaying plot. Total time: " +
         (Date.now() - timer) / 1000 + "ms.\n\n");
-    var blob = new Blob([new Uint8Array(args.contents).buffer],
-                        { "type" : "image\/svg+xml" });
     window.URL = window.URL || window.webkitURL;
     ui.plot.src = window.URL.createObjectURL(blob);
   }
