@@ -1,4 +1,4 @@
-v8prof
+[v8prof](https://caitp.github.io/v8prof)
 ======
 
 Forked from http://v8.googlecode.com/svn/branches/bleeding_edge/tools/profviz,
